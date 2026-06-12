@@ -1,0 +1,24 @@
+server:
+  listen: ":8080"
+  read_timeout: 10s
+  write_timeout: 30s
+
+metrics:
+  listen: ":9090" # /metrics for Prometheus
+
+routes:
+  - match:
+      host: "api.example.com"
+      path_prefix: "/"
+    upstreams:
+      - "http://10.0.0.10:3000"
+      - "http://10.0.0.11:3000"
+    rate_limit:
+      requests_per_second: 50
+      burst: 100
+    retry:
+      attempts: 2
+      methods: [GET, HEAD]
+    circuit_breaker:
+      failure_threshold: 5
+      open_duration: 30s

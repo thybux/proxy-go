@@ -92,13 +92,38 @@ standard library plus a Prometheus client.
 ## Project layout
 
 ```
-cmd/proxy/            entry point (flag parsing, wiring, signal handling)
-internal/config/      YAML config loading + validation
-internal/router/      route matching (host / path prefix)
-internal/proxy/       the forwarder (httputil.ReverseProxy wrapper, load balancing)
-internal/middleware/  rate limit, circuit breaker, retry, logging, request ID
-internal/metrics/     Prometheus collectors
-internal/health/      passive upstream health tracking
+proxy-go/
+├── go.mod
+├── README.md
+├── config.yaml                    # example config
+├── cmd/
+│   └── proxy/
+│       └── main.go                # flag parsing, wiring, signal handling (SIGTERM)
+├── internal/
+│   ├── config/
+│   │   ├── config.go              # structs + YAML loading + validation
+│   │   └── config_test.go
+│   ├── router/
+│   │   ├── router.go              # host / path prefix matching → route
+│   │   └── router_test.go
+│   ├── proxy/
+│   │   ├── forwarder.go           # httputil.ReverseProxy wrapper
+│   │   └── balancer.go            # round-robin across upstreams
+│   ├── middleware/
+│   │   ├── chain.go               # func(http.Handler) http.Handler composition
+│   │   ├── requestid.go
+│   │   ├── logging.go             # JSON logs via log/slog (stdlib)
+│   │   ├── ratelimit.go           # token bucket per client IP
+│   │   ├── circuitbreaker.go
+│   │   └── retry.go
+│   ├── metrics/
+│   │   └── metrics.go             # Prometheus collectors
+│   └── health/
+│       └── tracker.go             # passive upstream health tracking
+└── testdata/
+    ├── config.yaml                # config for local dev / tests
+    └── upstream/
+        └── main.go                # dummy upstream for local testing
 ```
 
 ## Development
@@ -134,38 +159,3 @@ hey -z 30s -c 50 http://localhost:8080/
 ## License
 
 MIT
-
-proxy-go/
-├── go.mod
-├── README.md
-├── config.yaml # config d'exemple
-├── cmd/
-│ └── proxy/
-│ └── main.go # parsing flags, wiring, signaux
-(SIGTERM)
-├── internal/
-│ ├── config/
-│ │ ├── config.go # structs + chargement YAML + validation
-│ │ └── config_test.go
-│ ├── router/
-│ │ ├── router.go # matching host / path prefix → route
-│ │ └── router_test.go
-│ ├── proxy/
-│ │ ├── forwarder.go # wrapper httputil.ReverseProxy
-│ │ └── balancer.go # round-robin entre upstreams
-│ ├── middleware/
-│ │ ├── chain.go # composition func(http.Handler)
-http.Handler
-│ │ ├── requestid.go
-│ │ ├── logging.go # logs JSON via log/slog (stdlib)
-│ │ ├── ratelimit.go # token bucket par IP
-│ │ ├── circuitbreaker.go
-│ │ └── retry.go
-│ ├── metrics/
-│ │ └── metrics.go # collectors Prometheus
-│ └── health/
-│ └── tracker.go # santé passive des upstreams
-└── testdata/
-├── config.yaml # config pour les tests/dev local
-└── upstream/
-└── main.go # faux upstream pour tester en local

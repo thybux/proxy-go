@@ -1,0 +1,12 @@
+# Local dev config — v0.1 scope only (no rate limit / retry / breaker yet).
+server:
+  listen: ":8080"
+  read_timeout: 10s
+  write_timeout: 30s
+
+routes:
+  # No host filter: matches any Host header.
+  - match:
+      path_prefix: "/"
+    upstreams:
+      - "http://localhost:3000"
